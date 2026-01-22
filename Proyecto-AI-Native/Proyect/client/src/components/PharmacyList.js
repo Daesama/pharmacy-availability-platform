@@ -142,8 +142,8 @@ const PharmacyList = () => {
               <Refresh />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Enviar feedback">
-            <IconButton onClick={() => showFeedback('success', 'Gracias por tu feedback')} color="primary">
+          <Tooltip title="Enviar sugerencia para mejorar la plataforma">
+            <IconButton onClick={() => navigate('/suggestions')} color="primary">
               <Star />
             </IconButton>
           </Tooltip>

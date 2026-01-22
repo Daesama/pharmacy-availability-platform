@@ -7,6 +7,7 @@ import PharmacyList from './components/PharmacyList';
 import Inventory from './components/Inventory';
 import TurnRequest from './components/TurnRequest_fixed';
 import TurnDisplay from './components/TurnDisplay_fixed';
+import Suggestions from './components/Suggestions';
 import { SocketProvider } from './contexts/SocketContext';
 
 const theme = createTheme({
@@ -42,6 +43,7 @@ function App() {
               <Route path="/pharmacy/:id/inventory" element={<Inventory />} />
               <Route path="/pharmacy/:id/turn-request" element={<TurnRequest />} />
               <Route path="/pharmacy/:id/turns" element={<TurnDisplay />} />
+              <Route path="/suggestions" element={<Suggestions />} />
             </Routes>
           </div>
         </Router>
