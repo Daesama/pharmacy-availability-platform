@@ -20,9 +20,17 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Logs (recursive)
+**/logs/
+**/*.log
+
 # Env / secrets
 .env
 .env.*
+
+# Env / secrets (recursive)
+**/.env
+**/.env.*
 
 # Node
 node_modules/
@@ -33,6 +41,16 @@ build/
 out/
 .next/
 .nuxt/
+
+# Node (recursive)
+**/node_modules/
+**/dist/
+**/build/
+**/.cache/
+**/.tmp/
+**/out/
+**/.next/
+**/.nuxt/
 
 # Python
 __pycache__/
@@ -47,6 +65,19 @@ __pycache__/
 venv/
 ENV/
 
+# Python (recursive)
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+**/*.pyd
+**/*.egg-info/
+**/.eggs/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.venv/
+**/venv/
+**/ENV/
+
 # Java
 *.class
 *.jar
@@ -57,15 +88,26 @@ ENV/
 # Maven / Gradle
 /target/
 .gradle/
-build/
+
+# Maven / Gradle (recursive)
+**/target/
+**/.gradle/
 
 # .NET
 bin/
 obj/
 
+# .NET (recursive)
+**/bin/
+**/obj/
+
 # Coverage
 coverage/
 .nyc_output/
+
+# Coverage (recursive)
+**/coverage/
+**/.nyc_output/
 
 # Local tooling
 *.sqlite
