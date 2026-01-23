@@ -173,8 +173,95 @@ const TurnDisplay = () => {
 
   const fetchTurns = async () => {
     try {
-      const response = await axios.get(`/api/pharmacy/${id}/turns`);
-      const turnsData = response.data?.turns || [];
+      // Simulación de datos para demostración
+      const simulatedTurns = [
+        {
+          id: 1,
+          turn_number: 'A001',
+          user_name: 'Juan Pérez',
+          status: 'called',
+          request_type: 'digital',
+          requested_at: '2026-01-23T13:20:00',
+          called_at: '2026-01-23T13:35:00',
+          attended_at: null
+        },
+        {
+          id: 2,
+          turn_number: 'A002',
+          user_name: 'María García',
+          status: 'pending',
+          request_type: 'physical',
+          requested_at: '2026-01-23T13:30:00',
+          called_at: null,
+          attended_at: null
+        },
+        {
+          id: 3,
+          turn_number: 'A003',
+          user_name: 'Carlos Rodríguez',
+          status: 'pending',
+          request_type: 'digital',
+          requested_at: '2026-01-23T13:32:00',
+          called_at: null,
+          attended_at: null
+        },
+        {
+          id: 4,
+          turn_number: 'A004',
+          user_name: 'Ana Martínez',
+          status: 'attended',
+          request_type: 'physical',
+          requested_at: '2026-01-23T13:00:00',
+          called_at: '2026-01-23T13:10:00',
+          attended_at: '2026-01-23T13:25:00'
+        },
+        {
+          id: 5,
+          turn_number: 'A005',
+          user_name: 'Luis Sánchez',
+          status: 'pending',
+          request_type: 'digital',
+          requested_at: '2026-01-23T13:38:00',
+          called_at: null,
+          attended_at: null
+        },
+        {
+          id: 6,
+          turn_number: 'A006',
+          user_name: 'Sofía López',
+          status: 'cancelled',
+          request_type: 'physical',
+          requested_at: '2026-01-23T12:45:00',
+          called_at: null,
+          attended_at: null
+        },
+        {
+          id: 7,
+          turn_number: 'A007',
+          user_name: 'Roberto Díaz',
+          status: 'pending',
+          request_type: 'digital',
+          requested_at: '2026-01-23T13:40:00',
+          called_at: null,
+          attended_at: null
+        },
+        {
+          id: 8,
+          turn_number: 'A008',
+          user_name: 'Carmen Torres',
+          status: 'attended',
+          request_type: 'physical',
+          requested_at: '2026-01-23T12:30:00',
+          called_at: '2026-01-23T12:40:00',
+          attended_at: '2026-01-23T13:00:00'
+        }
+      ];
+
+      // Comentamos la llamada real al API para usar datos simulados
+      // const response = await axios.get(`/api/pharmacy/${id}/turns`);
+      // const turnsData = response.data?.turns || [];
+      
+      const turnsData = simulatedTurns;
       setTurns(turnsData);
       calculateStatistics(turnsData);
       setLastUpdate(new Date());
@@ -466,7 +553,6 @@ const TurnDisplay = () => {
                   <TableCell sx={{ fontWeight: 'bold' }}>Hora Solicitud</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Hora Llamado</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Tiempo Espera</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Tipo</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -505,14 +591,6 @@ const TurnDisplay = () => {
                       <Typography variant="body2" color="text.secondary">
                         {getWaitingTime(turn.requested_at, turn.status)}
                       </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={turn.request_type === 'digital' ? 'Digital' : 'Presencial'}
-                        variant="outlined"
-                        size="small"
-                        color={turn.request_type === 'digital' ? 'primary' : 'secondary'}
-                      />
                     </TableCell>
                   </TableRow>
                 ))}
