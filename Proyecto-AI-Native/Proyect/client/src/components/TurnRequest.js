@@ -104,12 +104,20 @@ const TurnRequest = () => {
       setError('El documento debe tener al menos 5 caracteres');
       return false;
     }
-    if (formData.document_type === 'cc' && !/^\d+$/.test(formData.user_document)) {
-      setError('La cédula debe contener solo números');
+    if (!formData.phone) {
+      setError('El número de celular es obligatorio para recibir notificaciones por SMS');
       return false;
     }
-    if (formData.phone && !/^\d+$/.test(formData.phone.replace(/[-\s]/g, ''))) {
+    if (!/^\d+$/.test(formData.phone.replace(/[-\s]/g, ''))) {
       setError('El teléfono debe contener solo números');
+      return false;
+    }
+    if (formData.phone.replace(/[-\s]/g, '').length < 10) {
+      setError('El teléfono debe tener al menos 10 dígitos');
+      return false;
+    }
+    if (formData.document_type === 'cc' && !/^\d+$/.test(formData.user_document)) {
+      setError('La cédula debe contener solo números');
       return false;
     }
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -162,12 +170,22 @@ const TurnRequest = () => {
         pharmacy_id: parseInt(id),
         user_id: formData.user_id || `USER_${Date.now()}`,
         user_name: formData.user_name,
-        user_document: formData.user_document
+        user_document: formData.user_document,
+        phone_number: formData.phone
       });
 
       setTurnData(response.data);
       setSuccess(true);
       setActiveStep(2);
+      
+      // Mostrar notificación de SMS si se envió
+      if (response.data.sms_sent && formData.phone) {
+        if (response.data.sms_sent.status === 'sent') {
+          console.log('✅ SMS enviado exitosamente');
+        } else if (response.data.sms_sent.status === 'simulated') {
+          console.log('📱 SMS simulado (Twilio no configurado)');
+        }
+      }
       
     } catch (err) {
       if (err.response?.status === 400) {
@@ -244,10 +262,12 @@ const TurnRequest = () => {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Teléfono (opcional)"
+                  label="Teléfono *"
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
+                  required
+                  helperText="Requerido para recibir notificaciones por SMS"
                   InputProps={{
                     startAdornment: <Phone sx={{ mr: 1, color: 'action.active' }} />
                   }}
@@ -295,11 +315,9 @@ const TurnRequest = () => {
               <Typography variant="body1" gutterBottom>
                 <strong>Documento:</strong> {formData.user_document}
               </Typography>
-              {formData.phone && (
-                <Typography variant="body1" gutterBottom>
-                  <strong>Teléfono:</strong> {formData.phone}
-                </Typography>
-              )}
+              <Typography variant="body1" gutterBottom>
+                <strong>Teléfono:</strong> {formData.phone}
+              </Typography>
               {formData.email && (
                 <Typography variant="body1" gutterBottom>
                   <strong>Email:</strong> {formData.email}

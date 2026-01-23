@@ -6,6 +6,12 @@ import sqlite3
 import json
 from datetime import datetime
 import uuid
+import os
+from twilio.rest import Client
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()
 
 app = FastAPI(title="FarmaciaConnect API", version="1.0.0")
 
@@ -17,6 +23,42 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Servicio de SMS
+class SMSService:
+    def __init__(self):
+        self.account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+        self.auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+        self.twilio_phone = os.getenv('TWILIO_PHONE_NUMBER')
+        
+        if self.account_sid and self.auth_token and self.twilio_phone:
+            self.client = Client(self.account_sid, self.auth_token)
+            self.enabled = True
+        else:
+            self.enabled = False
+            print("⚠️ Twilio no configurado - SMS desactivado")
+    
+    def send_turn_notification(self, phone_number: str, turn_number: str, pharmacy_name: str, user_name: str):
+        if not self.enabled:
+            print(f"📱 SMS simulado: {turn_number} para {user_name} en {pharmacy_name}")
+            return {"status": "simulated", "message": "SMS no configurado"}
+        
+        try:
+            message = self.client.messages.create(
+                body=f"🏥 FarmaciaConnect - ¡Tu turno está listo! 📋\n\n"
+                     f"Turno: {turn_number}\n"
+                     f"Farmacia: {pharmacy_name}\n"
+                     f"Paciente: {user_name}\n"
+                     f"Por favor acércate a la farmacia.\n\n"
+                     f"¡Gracias por tu paciencia!",
+                from_=self.twilio_phone,
+                to=phone_number
+            )
+            return {"status": "sent", "message_sid": message.sid}
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+
+sms_service = SMSService()
 
 # Modelos de datos
 class Medication(BaseModel):
@@ -33,6 +75,7 @@ class TurnRequest(BaseModel):
     user_id: str
     user_name: str
     user_document: str
+    phone_number: Optional[str] = None
 
 class Turn(BaseModel):
     id: int
@@ -284,13 +327,30 @@ async def request_turn(request: TurnRequest):
     ''', (request.pharmacy_id, request.user_id, request.user_name, request.user_document, turn_number))
     
     turn_id = cursor.lastrowid
+    
+    # Obtener nombre de la farmacia para el SMS
+    cursor.execute('SELECT name FROM pharmacies WHERE id = ?', (request.pharmacy_id,))
+    pharmacy_result = cursor.fetchone()
+    pharmacy_name = pharmacy_result[0] if pharmacy_result else "Farmacia"
+    
     conn.commit()
     conn.close()
+    
+    # Enviar SMS si se proporcionó número de teléfono
+    sms_result = None
+    if request.phone_number:
+        sms_result = sms_service.send_turn_notification(
+            phone_number=request.phone_number,
+            turn_number=f"A{turn_number:03d}",
+            pharmacy_name=pharmacy_name,
+            user_name=request.user_name
+        )
     
     return {
         "success": True,
         "turn_id": turn_id,
-        "turn_number": turn_number
+        "turn_number": turn_number,
+        "sms_sent": sms_result
     }
 
 @app.get("/api/pharmacy/{pharmacy_id}/turns", response_model=List[Turn])
@@ -362,6 +422,41 @@ async def update_turn_status(turn_id: int, status: str):
     conn.close()
     
     return {"success": True}
+
+@app.post("/api/turns/{turn_id}/notify")
+async def send_turn_notification(turn_id: int, phone_number: str):
+    """Enviar notificación SMS para un turno específico"""
+    conn = sqlite3.connect('farmacia.db')
+    cursor = conn.cursor()
+    
+    # Obtener información del turno
+    cursor.execute('''
+        SELECT t.turn_number, t.user_name, p.name as pharmacy_name
+        FROM turns t
+        JOIN pharmacies p ON t.pharmacy_id = p.id
+        WHERE t.id = ?
+    ''', (turn_id,))
+    
+    turn_info = cursor.fetchone()
+    if not turn_info:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Turno no encontrado")
+    
+    turn_number, user_name, pharmacy_name = turn_info
+    conn.close()
+    
+    # Enviar SMS
+    sms_result = sms_service.send_turn_notification(
+        phone_number=phone_number,
+        turn_number=f"A{turn_number:03d}",
+        pharmacy_name=pharmacy_name,
+        user_name=user_name
+    )
+    
+    return {
+        "success": True,
+        "sms_sent": sms_result
+    }
 
 if __name__ == "__main__":
     import uvicorn
