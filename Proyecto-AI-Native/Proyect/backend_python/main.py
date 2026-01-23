@@ -365,4 +365,9 @@ async def update_turn_status(turn_id: int, status: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import os
+    
+    # Usa el puerto que da Render o el 8000 por defecto
+    port = int(os.environ.get("PORT", 8000))
+    # IMPORTANTE: host='0.0.0.0' es obligatorio en la nube
+    uvicorn.run(app, host='0.0.0.0', port=port)
