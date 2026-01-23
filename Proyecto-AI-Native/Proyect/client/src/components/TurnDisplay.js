@@ -612,3 +612,6 @@ const TurnDisplay = () => {
 };
 
 export default TurnDisplay;
+
+
+//Solucionado
