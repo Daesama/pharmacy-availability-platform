@@ -51,6 +51,8 @@ const TurnRequest = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  
   const [formData, setFormData] = useState({
     user_name: '',
     user_document: '',
@@ -119,7 +121,7 @@ const TurnRequest = () => {
 
   const fetchTurnHistory = async () => {
     try {
-      const response = await axios.get(`/api/user/${formData.user_document}/turns`);
+      const response = await axios.get(`${API_URL}/api/user/${formData.user_document}/turns`);
       setTurnHistory(response.data.turns || []);
     } catch (err) {
       console.error('Error fetching turn history:', err);
@@ -129,7 +131,7 @@ const TurnRequest = () => {
 
   const fetchEstimatedWaitTime = async () => {
     try {
-      const response = await axios.get(`/api/pharmacy/${id}/wait-time`);
+      const response = await axios.get(`${API_URL}/api/pharmacy/${id}/wait-time`);
       setEstimatedWaitTime(response.data.estimated_minutes || 0);
     } catch (err) {
       setEstimatedWaitTime(15); // Default estimate
@@ -138,7 +140,7 @@ const TurnRequest = () => {
 
   const cancelTurn = async (turnId) => {
     try {
-      await axios.put(`/api/turns/${turnId}/status`, { status: 'cancelled' });
+      await axios.put(`${API_URL}/api/turns/${turnId}/status`, { status: 'cancelled' });
       setShowCancelDialog(false);
       setCurrentTurn(null);
       fetchTurnHistory();
@@ -156,7 +158,7 @@ const TurnRequest = () => {
       setLoading(true);
       setError('');
       
-      const response = await axios.post('/api/turns/request', {
+      const response = await axios.post(`${API_URL}/api/turns/request`, {
         pharmacy_id: parseInt(id),
         user_id: formData.user_id || `USER_${Date.now()}`,
         user_name: formData.user_name,

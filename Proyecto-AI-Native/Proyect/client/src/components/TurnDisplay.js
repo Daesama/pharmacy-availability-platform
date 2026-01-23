@@ -56,6 +56,8 @@ const TurnDisplay = () => {
   const navigate = useNavigate();
   const { socket, joinPharmacy } = useSocket();
   
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  
   const [turns, setTurns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -258,8 +260,8 @@ const TurnDisplay = () => {
       ];
 
       // Comentamos la llamada real al API para usar datos simulados
-      // const response = await axios.get(`/api/pharmacy/${id}/turns`);
-      // const turnsData = response.data?.turns || [];
+      // const response = await axios.get(`${API_URL}/api/pharmacy/${id}/turns`);
+      // const turnsDataFromAPI = response.data?.turns || [];
       
       const turnsData = simulatedTurns;
       setTurns(turnsData);

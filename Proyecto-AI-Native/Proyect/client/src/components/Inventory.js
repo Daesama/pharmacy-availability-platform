@@ -48,6 +48,8 @@ import axios from 'axios';
 const Inventory = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
   const { socket, joinPharmacy } = useSocket();
   
   const [medications, setMedications] = useState([]);
@@ -63,7 +65,7 @@ const Inventory = () => {
   const fetchInventory = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/pharmacy/${id}/inventory`);
+      const response = await axios.get(`${API_URL}/api/pharmacy/${id}/inventory`);
       
       // Validar que response.data.medications exista y sea un array
       const medicationsData = response.data?.medications || [];
