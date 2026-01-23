@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -30,7 +30,6 @@ import {
   Divider,
   IconButton,
   Tooltip,
-  Fade,
   Zoom
 } from '@mui/material';
 import { 
@@ -39,9 +38,7 @@ import {
   ConfirmationNumber,
   History,
   AccessTime,
-  CheckCircle,
   Error,
-  Info,
   Phone,
   Email
 } from '@mui/icons-material';
@@ -117,7 +114,7 @@ const TurnRequest = () => {
     return true;
   };
 
-  const fetchTurnHistory = async () => {
+  const fetchTurnHistory = useCallback(async () => {
     try {
       const response = await axios.get(`/api/user/${formData.user_document}/turns`);
       setTurnHistory(response.data.turns || []);
@@ -125,16 +122,17 @@ const TurnRequest = () => {
       console.error('Error fetching turn history:', err);
       setTurnHistory([]);
     }
-  };
+  }, [formData.user_document]);
 
-  const fetchEstimatedWaitTime = async () => {
+  const fetchEstimatedWaitTime = useCallback(async () => {
     try {
       const response = await axios.get(`/api/pharmacy/${id}/wait-time`);
-      setEstimatedWaitTime(response.data.estimated_minutes || 0);
+      setEstimatedWaitTime(response.data.estimated_minutes || 15);
     } catch (err) {
+      console.error('Error fetching wait time:', err);
       setEstimatedWaitTime(15);
     }
-  };
+  }, [id]);
 
   const cancelTurn = async (turnId) => {
     try {
@@ -152,7 +150,7 @@ const TurnRequest = () => {
     if (formData.user_document && formData.user_document.length >= 5) {
       fetchTurnHistory();
     }
-  }, [id, formData.user_document]);
+  }, [id, formData.user_document, fetchEstimatedWaitTime, fetchTurnHistory]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

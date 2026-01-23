@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -15,22 +15,14 @@ import {
   Paper,
   Chip,
   CircularProgress,
-  Alert,
   IconButton,
   Tooltip,
   Button,
   Grid,
-  LinearProgress,
   Switch,
   FormControlLabel,
-  Badge,
-  Fade,
-  Zoom,
-  Divider,
   ToggleButton,
-  ToggleButtonGroup,
-  CardActions,
-  Avatar
+  ToggleButtonGroup
 } from '@mui/material';
 import { 
   Refresh, 
@@ -40,13 +32,7 @@ import {
   CheckCircle,
   Pending,
   Cancel,
-  Settings,
-  Fullscreen,
-  VolumeUp,
-  NotificationsActive,
-  TrendingUp,
-  People,
-  Schedule
+  Fullscreen
 } from '@mui/icons-material';
 import { useSocket } from '../contexts/SocketContext';
 import axios from 'axios';
@@ -58,12 +44,10 @@ const TurnDisplay = () => {
   
   const [turns, setTurns] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshInterval, setRefreshInterval] = useState(5000);
   const [soundEnabled, setSoundEnabled] = useState(false);
-  const [fullscreenMode, setFullscreenMode] = useState(false);
   const [viewMode, setViewMode] = useState('table');
   const [filterStatus, setFilterStatus] = useState('all');
   const [statistics, setStatistics] = useState({
@@ -76,6 +60,42 @@ const TurnDisplay = () => {
     digitalTurns: 0,
     physicalTurns: 0
   });
+
+  const playNotificationSound = () => {
+    if (!soundEnabled) return;
+    
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.value = 0.1;
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.2);
+    } catch (error) {
+      console.error('Error playing sound:', error);
+    }
+  };
+
+  const fetchTurns = async () => {
+    try {
+      const response = await axios.get(`/api/pharmacy/${id}/turns`);
+      const turnsData = response.data.turns;
+      setTurns(turnsData);
+      calculateStatistics(turnsData);
+      setLastUpdate(new Date());
+    } catch (err) {
+      console.error('Error fetching turns:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     joinPharmacy(id);
@@ -144,44 +164,11 @@ const TurnDisplay = () => {
     setStatistics(stats);
   };
 
-  const playNotificationSound = () => {
-    if (soundEnabled) {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator(440, 'sine');
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      gainNode.gain.value = 0.1;
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.2);
-    }
-  };
-
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
-      setFullscreenMode(true);
     } else {
       document.exitFullscreen();
-      setFullscreenMode(false);
-    }
-  };
-
-  const fetchTurns = async () => {
-    try {
-      const response = await axios.get(`/api/pharmacy/${id}/turns`);
-      const turnsData = response.data.turns;
-      setTurns(turnsData);
-      calculateStatistics(turnsData);
-      setLastUpdate(new Date());
-      setError('');
-    } catch (err) {
-      setError('Error al cargar los turnos. Por favor intente nuevamente.');
-      console.error('Error fetching turns:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -236,10 +223,6 @@ const TurnDisplay = () => {
   const getCurrentTurn = () => {
     const calledTurn = turns.find(t => t.status === 'called');
     return calledTurn ? calledTurn.turn_number : '-';
-  };
-
-  const getNextTurns = () => {
-    return turns.filter(t => t.status === 'pending').slice(0, 5);
   };
 
   const filteredTurns = filterStatus === 'all' 

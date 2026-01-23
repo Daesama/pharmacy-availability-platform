@@ -113,17 +113,47 @@ def init_db():
             VALUES 
             ('MED001', 'Ibuprofeno 400mg', 'Analgésico y antiinflamatorio'),
             ('MED002', 'Paracetamol 500mg', 'Analgésico y antipirético'),
-            ('MED003', 'Amoxicilina 500mg', 'Antibiótico de amplio espectro')
+            ('MED003', 'Amoxicilina 500mg', 'Antibiótico de amplio espectro'),
+            ('MED004', 'Loratadina 10mg', 'Antihistamínico para alergias'),
+            ('MED005', 'Omeprazol 20mg', 'Inhibidor de bomba de protones'),
+            ('MED006', 'Salbutamol 100mcg', 'Broncodilatador para asma'),
+            ('MED007', 'Metformina 850mg', 'Antidiabético oral'),
+            ('MED008', 'Enalapril 10mg', 'Antihipertensivo IECA'),
+            ('MED009', 'Atorvastatina 20mg', 'Estatina para colesterol'),
+            ('MED010', 'Diazepam 5mg', 'Benzodiazepina ansiolítica'),
+            ('MED011', 'Insulina NPH', 'Insulina de acción intermedia'),
+            ('MED012', 'Aspirina 100mg', 'Antiagregante plaquetario')
         ''')
         
         cursor.execute('''
             INSERT INTO inventory (pharmacy_id, medication_code, current_stock, min_threshold)
             VALUES 
+            -- Farmacia 1 - Variedad de stock
             (1, 'MED001', 150, 20),
             (1, 'MED002', 200, 30),
             (1, 'MED003', 80, 15),
+            (1, 'MED004', 5, 25),   -- Bajo stock
+            (1, 'MED005', 0, 20),   -- Agotado
+            (1, 'MED006', 12, 15),  -- Bajo stock
+            (1, 'MED007', 95, 40),
+            (1, 'MED008', 3, 10),   -- Bajo stock
+            (1, 'MED009', 60, 25),
+            (1, 'MED010', 0, 8),    -- Agotado
+            (1, 'MED011', 25, 30),  -- Bajo stock
+            (1, 'MED012', 180, 50),
+            -- Farmacia 2 - Variedad de stock
             (2, 'MED001', 200, 25),
-            (2, 'MED002', 180, 28)
+            (2, 'MED002', 180, 28),
+            (2, 'MED003', 0, 20),   -- Agotado
+            (2, 'MED004', 8, 30),   -- Bajo stock
+            (2, 'MED005', 45, 35),
+            (2, 'MED006', 2, 12),   -- Bajo stock
+            (2, 'MED007', 120, 45),
+            (2, 'MED008', 0, 15),   -- Agotado
+            (2, 'MED009', 85, 30),
+            (2, 'MED010', 15, 10),
+            (2, 'MED011', 40, 25),
+            (2, 'MED012', 0, 40)    -- Agotado
         ''')
     
     conn.commit()
@@ -138,7 +168,7 @@ init_db()
 async def root():
     return {"message": "FarmaciaConnect API funcionando"}
 
-@app.get("/api/pharmacy/{pharmacy_id}/inventory", response_model=List[Medication])
+@app.get("/api/pharmacy/{pharmacy_id}/inventory")
 async def get_inventory(pharmacy_id: int):
     conn = sqlite3.connect('farmacia.db')
     cursor = conn.cursor()
@@ -167,17 +197,22 @@ async def get_inventory(pharmacy_id: int):
     
     medications = []
     for row in results:
-        medications.append(Medication(
-            code=row[0],
-            name=row[1],
-            current_stock=row[2],
-            min_threshold=row[3],
-            status=row[4],
-            demand_score=row[5],
-            last_updated=row[6]
-        ))
+        medications.append({
+            "code": row[0],
+            "name": row[1],
+            "current_stock": row[2],
+            "min_threshold": row[3],
+            "status": row[4],
+            "demand_score": row[5],
+            "last_updated": row[6]
+        })
     
-    return medications
+    return {
+        "pharmacy_id": pharmacy_id,
+        "medications": medications,
+        "total_count": len(medications),
+        "last_updated": datetime.now().isoformat()
+    }
 
 @app.post("/api/inventory/update")
 async def update_inventory(pharmacy_id: int, medication_code: str, quantity_dispensed: int):

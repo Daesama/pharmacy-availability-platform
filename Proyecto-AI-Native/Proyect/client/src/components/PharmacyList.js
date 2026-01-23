@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -11,17 +11,16 @@ import {
   TextField,
   InputAdornment,
   Chip,
-  Paper,
-  LinearProgress,
-  Avatar,
-  Rating,
   IconButton,
   Tooltip,
+  LinearProgress,
   Fade,
-  Tabs,
-  Tab,
+  Alert,
+  Rating,
+  Avatar,
   CardActions,
-  Alert
+  Tabs,
+  Tab
 } from '@mui/material';
 import { 
   Search, 
@@ -33,9 +32,9 @@ import {
   People,
   Star,
   Info,
-  Refresh
+  Refresh,
+  Inventory
 } from '@mui/icons-material';
-import axios from 'axios';
 
 // Datos de ejemplo - en producción vendrían de una API
 const pharmaciesData = [
@@ -79,10 +78,9 @@ const pharmaciesData = [
 
 const PharmacyList = () => {
   const navigate = useNavigate();
-  const [pharmacies, setPharmacies] = useState(pharmaciesData);
+  const [pharmacies] = useState(pharmaciesData);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState({ show: false, type: '', message: '' });
 
   const filteredPharmacies = pharmacies.filter(pharmacy =>
@@ -191,7 +189,12 @@ const PharmacyList = () => {
                     boxShadow: 4
                   }
                 }}
-                onClick={() => handlePharmacyClick(pharmacy.id)}
+                onClick={(e) => {
+                  // Solo navegar si el clic no es en un botón
+                  if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                    handlePharmacyClick(pharmacy.id);
+                  }
+                }}
               >
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -279,22 +282,60 @@ const PharmacyList = () => {
                   </Box>
                 </CardContent>
                 
-                <CardActions sx={{ p: 2, backgroundColor: 'grey.50' }}>
-                  <Button
-                    variant="contained"
-                    onClick={() => handleTurnRequest(pharmacy.id)}
-                    sx={{ mr: 1 }}
-                    startIcon={<TrendingUp />}
-                  >
-                    Solicitar Turno
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    onClick={() => handleTurnDisplay(pharmacy.id)}
-                    startIcon={<People />}
-                  >
-                    Ver Turnos
-                  </Button>
+                <CardActions sx={{ p: 2, backgroundColor: 'grey.50', flexDirection: 'column', gap: 1 }}>
+                  <Box sx={{ display: 'flex', width: '100%', gap: 1 }}>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigate(`/pharmacy/${pharmacy.id}/rate`);
+                      }}
+                      sx={{ flex: 1, minHeight: 40 }}
+                      startIcon={<Star />}
+                    >
+                      Calificar Farmacia
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigate(`/pharmacy/${pharmacy.id}/inventory`);
+                      }}
+                      sx={{ flex: 1, minHeight: 40 }}
+                      startIcon={<Inventory />}
+                    >
+                      Ver Inventario
+                    </Button>
+                  </Box>
+                  <Box sx={{ display: 'flex', width: '100%', gap: 1 }}>
+                    <Button
+                      variant="contained"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleTurnRequest(pharmacy.id);
+                      }}
+                      sx={{ flex: 1, minHeight: 40 }}
+                      startIcon={<TrendingUp />}
+                    >
+                      Solicitar Turno
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleTurnDisplay(pharmacy.id);
+                      }}
+                      sx={{ flex: 1, minHeight: 40 }}
+                      startIcon={<People />}
+                    >
+                      Ver Turnos
+                    </Button>
+                  </Box>
                 </CardActions>
               </Card>
             </Fade>
