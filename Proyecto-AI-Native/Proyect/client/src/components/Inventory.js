@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -23,7 +23,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Button,
   IconButton,
   Tooltip,
   ToggleButton,
@@ -61,6 +60,28 @@ const Inventory = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
+  const fetchInventory = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`/api/pharmacy/${id}/inventory`);
+      
+      // Validar que response.data.medications exista y sea un array
+      const medicationsData = response.data?.medications || [];
+      setMedications(medicationsData);
+      setFilteredMedications(medicationsData);
+      setLastUpdate(new Date());
+      setError('');
+    } catch (err) {
+      setError('Error al cargar el inventario. Por favor intente nuevamente.');
+      console.error('Error fetching inventory:', err);
+      // En caso de error, establecer arrays vacíos
+      setMedications([]);
+      setFilteredMedications([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     joinPharmacy(id);
   }, [id, joinPharmacy]);
@@ -79,13 +100,19 @@ const Inventory = () => {
         socket.off('inventory_updated');
       }
     };
-  }, [socket, id]);
+  }, [socket, id, fetchInventory]);
 
   useEffect(() => {
     fetchInventory();
-  }, [id]);
+  }, [fetchInventory]);
 
   useEffect(() => {
+    // Validar que medications sea un array antes de filtrar
+    if (!Array.isArray(medications)) {
+      setFilteredMedications([]);
+      return;
+    }
+
     let filtered = medications.filter(med => {
       const matchesSearch = med.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            med.code.toLowerCase().includes(searchTerm.toLowerCase());
@@ -111,22 +138,6 @@ const Inventory = () => {
 
     setFilteredMedications(filtered);
   }, [medications, searchTerm, filterStatus, sortBy]);
-
-  const fetchInventory = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`/api/pharmacy/${id}/inventory`);
-      setMedications(response.data.medications);
-      setFilteredMedications(response.data.medications);
-      setLastUpdate(new Date());
-      setError('');
-    } catch (err) {
-      setError('Error al cargar el inventario. Por favor intente nuevamente.');
-      console.error('Error fetching inventory:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const exportToCSV = () => {
     const headers = ['Código', 'Nombre', 'Stock Actual', 'Stock Mínimo', 'Estado', 'Demanda'];
@@ -356,7 +367,7 @@ const Inventory = () => {
                       <Alert severity="warning" sx={{ mt: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <Warning sx={{ mr: 1 }} />
-                          Stock por debajo del mínimo recomendado
+                          stock bajo
                         </Box>
                       </Alert>
                     )}
