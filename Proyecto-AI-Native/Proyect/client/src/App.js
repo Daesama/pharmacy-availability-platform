@@ -6,7 +6,7 @@ import Navbar from './components/Navbar';
 import PharmacyList from './components/PharmacyList';
 import Inventory from './components/Inventory';
 import TurnRequest from './components/TurnRequest_fixed';
-import TurnDisplay from './components/TurnDisplay_fixed';
+import TurnDisplay from './components/TurnDisplay';
 import Suggestions from './components/Suggestions';
 import PharmacyRatePage from './pages/PharmacyRatePage';
 import { SocketProvider } from './contexts/SocketContext';
